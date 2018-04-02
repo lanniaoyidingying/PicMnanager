@@ -10,10 +10,12 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -26,12 +28,14 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class PictureManagerActivity extends AppCompatActivity {
     //https://www.cnblogs.com/plokmju/p/Android_SystemCamera.html
-
+    //Android保存图片到系统图库  http://stormzhang.com/android/2014/07/24/android-save-image-to-gallery/Android保存图片到系统图库
+    //https://www.cnblogs.com/kingwild/articles/5422329.html
     private static final String TAG = "main";
 
     private Button btn_PhotoDefault, btn_PhotoExist,btn_PhotoNewdir,btn_DriOK,btn_continue;
@@ -44,6 +48,7 @@ public class PictureManagerActivity extends AppCompatActivity {
     private Intent intent;
     private File mFile;
     private Uri mUri;
+    private boolean mIsdefault = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,46 +91,59 @@ public class PictureManagerActivity extends AppCompatActivity {
             switch (v.getId()) {
                 // 指定相机拍摄照片保存地址
                 case R.id.btn_PhotoDefault:
-                    mFilePath = mDefaultFilePath;
+                    mIsdefault = true;
                     takePhoto();
                     break;
                 // 不指定相机拍摄照片保存地址
                 case R.id.btn_PhotoExist:
+                    mIsdefault = false;
                     takePhoto();
                     break;
                 case R.id.btn_PhotoNewdir:
-                    if(etFileName.getVisibility() == View.GONE){
+                    mIsdefault = false;
+                    if (etFileName.getVisibility() == View.GONE) {
                         etFileName.setVisibility(View.VISIBLE);
                     }
-                    if(btn_DriOK.getVisibility() == View.GONE){
+                    if (btn_DriOK.getVisibility() == View.GONE) {
                         btn_DriOK.setVisibility(View.VISIBLE);
                     }
                     break;
-                    case R.id.btn_DriOK:
-                        if(btn_DriOK.getVisibility() ==View.VISIBLE){
+                case R.id.btn_DriOK:
+                    if (TextUtils.isEmpty(etFileName.getText().toString().trim())){
+                        Toast.makeText(PictureManagerActivity.this,"亲,你还没有文件夹名哦",Toast.LENGTH_SHORT).show();
+                    }else{
+                        if (btn_DriOK.getVisibility() == View.VISIBLE) {
                             btn_DriOK.setVisibility(View.GONE);
                         }
-                        if(etFileName.getVisibility() ==View.VISIBLE){
+                        if (etFileName.getVisibility() == View.VISIBLE) {
                             etFileName.setVisibility(View.GONE);
                         }
                         takePhoto();
-                    break;case R.id.btn_continue:
+                    }
+
+                    break;
+                    case R.id.btn_continue:
                         if(btn_continue.getVisibility() ==View.VISIBLE){
                             btn_continue.setVisibility(View.GONE);
                         }
                         takePhoto();
                     break;
                 default:
-                    break;
+                        break;
             }
 
         }
     };
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 0) {
            if(null!=mFile){
+               /*try {
+                   MediaStore.Images.Media.insertImage(this.getContentResolver(),
+                           mFile.getAbsolutePath(), mFilePath, null);
+               } catch (FileNotFoundException e) {
+                   e.printStackTrace();
+               }*/
                notifyGallery(mUri);
                iv_CameraImg.setImageURI(mUri);
            }else{
@@ -160,7 +178,17 @@ public class PictureManagerActivity extends AppCompatActivity {
             mFilePath = getFileName();
             mFile= new File(mFilePath);
             // 把文件地址转换成Uri格式
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
+            mUri = FileProvider.getUriForFile(this, "pro.sun.chuang.picmanager.fileprovider", mFile);
+            //添加权限
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+       } else{
             mUri = Uri.fromFile(mFile);
+       }
+       /* mUri = FileProvider.getUriForFile(this, "pro.sun.chuang.picmanager.fileprovider", mFile);
+        //添加权限
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);*/
             // 设置系统相机拍摄照片完成后图片文件的存放地址
             intent.putExtra(MediaStore.EXTRA_OUTPUT, mUri);
             startActivityForResult(intent, 0);
@@ -168,7 +196,7 @@ public class PictureManagerActivity extends AppCompatActivity {
     private void makeDirs(String filePath){
         File file = new File(filePath);
         if(!file.exists()){
-            file.mkdirs();
+            file.mkdir();
         }
     }
     private void checkPermission(){
@@ -185,13 +213,18 @@ public class PictureManagerActivity extends AppCompatActivity {
 
     private String getFilePath(){
         String dirs = etFileName.getText().toString().trim();
-        if(!TextUtils.isEmpty(dirs)){
-          //  mFilePath = FILE_PATH +"default";
-        //}else{
+        if(mIsdefault){
+            mFilePath = mDefaultFilePath;
+        }else if(!TextUtils.isEmpty(dirs)){
             mFilePath = FILE_PATH + dirs;
+        } else{
+          mFilePath = SPUtils.getInstance(this).getString("filePath");
         }
         Toast.makeText(this,mFilePath,Toast.LENGTH_SHORT).show();
-        makeDirs(mFilePath);
+        File pFile = new File(mFilePath);
+        if(!pFile.exists()){
+            makeDirs(mFilePath);
+        }
         SPUtils.getInstance(this).put("filePath",mFilePath);
         return mFilePath;
     }
@@ -201,9 +234,9 @@ public class PictureManagerActivity extends AppCompatActivity {
         Date date = new Date();
         SimpleDateFormat format = new SimpleDateFormat("'/IMG'_yyyyMMdd_HHmmss'.jpg'");//获取当前时间，进一步转化为字符串
         String str = format.format(date);
-        String filePath = getFilePath()+str;
-        Log.e(TAG, "getFileName: "+filePath );
-        return filePath;
+        String fileName = getFilePath()+str;
+        Log.e(TAG, "getFileName: "+fileName );
+        return fileName;
     }
 
     //通知图库更新保证图片能够在图库中找到

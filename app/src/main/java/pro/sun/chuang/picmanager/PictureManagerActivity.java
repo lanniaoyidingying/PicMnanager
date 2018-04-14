@@ -60,6 +60,7 @@ public class PictureManagerActivity extends AppCompatActivity {
         checkPermission();
     }
 
+    //不显示标题栏
     private void noTitle(){
         if(Build.VERSION.SDK_INT>= 23){
             this.supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -84,43 +85,38 @@ public class PictureManagerActivity extends AppCompatActivity {
         btn_continue.setOnClickListener(click);
     }
 
+    //选择拍照的模式
     private View.OnClickListener click = new View.OnClickListener() {
-
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
                 // 指定相机拍摄照片保存地址
                 case R.id.btn_PhotoDefault:
                     mIsdefault = true;
+                    viewGone(btn_DriOK);
+                    viewGone(etFileName);
                     takePhoto();
                     break;
                 // 不指定相机拍摄照片保存地址
                 case R.id.btn_PhotoExist:
                     mIsdefault = false;
+                    viewGone(btn_DriOK);
+                    viewGone(etFileName);
                     takePhoto();
                     break;
                 case R.id.btn_PhotoNewdir:
                     mIsdefault = false;
-                    if (etFileName.getVisibility() == View.GONE) {
-                        etFileName.setVisibility(View.VISIBLE);
-                    }
-                    if (btn_DriOK.getVisibility() == View.GONE) {
-                        btn_DriOK.setVisibility(View.VISIBLE);
-                    }
+                    showView(btn_DriOK);
+                    showView(etFileName);
                     break;
                 case R.id.btn_DriOK:
                     if (TextUtils.isEmpty(etFileName.getText().toString().trim())){
                         Toast.makeText(PictureManagerActivity.this,"亲,你还没有文件夹名哦",Toast.LENGTH_SHORT).show();
                     }else{
-                        if (btn_DriOK.getVisibility() == View.VISIBLE) {
-                            btn_DriOK.setVisibility(View.GONE);
-                        }
-                        if (etFileName.getVisibility() == View.VISIBLE) {
-                            etFileName.setVisibility(View.GONE);
-                        }
+                        viewGone(btn_DriOK);
+                        viewGone(etFileName);
                         takePhoto();
                     }
-
                     break;
                     case R.id.btn_continue:
                         if(btn_continue.getVisibility() ==View.VISIBLE){
@@ -134,6 +130,16 @@ public class PictureManagerActivity extends AppCompatActivity {
 
         }
     };
+    private void viewGone(View view){
+        if (view.getVisibility() == View.VISIBLE) {
+            view.setVisibility(View.GONE);
+        }
+    }
+    private void showView(View view){
+        if (view.getVisibility() == View.GONE) {
+            view.setVisibility(View.VISIBLE);
+        }
+    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 0) {
@@ -155,6 +161,7 @@ public class PictureManagerActivity extends AppCompatActivity {
         }
     }
 
+    //权限检查返回结果
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode){
@@ -169,6 +176,7 @@ public class PictureManagerActivity extends AppCompatActivity {
         }
     }
 
+    //进行拍照
     private void takePhoto() {
             intent = new Intent();
             // 指定开启系统相机的Action
@@ -186,19 +194,19 @@ public class PictureManagerActivity extends AppCompatActivity {
        } else{
             mUri = Uri.fromFile(mFile);
        }
-       /* mUri = FileProvider.getUriForFile(this, "pro.sun.chuang.picmanager.fileprovider", mFile);
-        //添加权限
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);*/
             // 设置系统相机拍摄照片完成后图片文件的存放地址
             intent.putExtra(MediaStore.EXTRA_OUTPUT, mUri);
             startActivityForResult(intent, 0);
     }
+
+    //对不存在的文件夹进行新建
     private void makeDirs(String filePath){
         File file = new File(filePath);
         if(!file.exists()){
             file.mkdir();
         }
     }
+    //检查apk是否拥有相关权限
     private void checkPermission(){
         if (Build.VERSION.SDK_INT >= 23) {
             int checkCameraPermission = ContextCompat.checkSelfPermission(PictureManagerActivity.this, Manifest.permission.CAMERA);
@@ -211,13 +219,14 @@ public class PictureManagerActivity extends AppCompatActivity {
         }
     }
 
+    //获取将要保存照片的文件夹路径
     private String getFilePath(){
         String dirs = etFileName.getText().toString().trim();
-        if(mIsdefault){
+        if(mIsdefault){//默认文件夹
             mFilePath = mDefaultFilePath;
-        }else if(!TextUtils.isEmpty(dirs)){
+        }else if(!TextUtils.isEmpty(dirs)){//自定义文件夹
             mFilePath = FILE_PATH + dirs;
-        } else{
+        } else{//已经存在的文价夹
           mFilePath = SPUtils.getInstance(this).getString("filePath");
         }
         Toast.makeText(this,mFilePath,Toast.LENGTH_SHORT).show();
@@ -229,7 +238,7 @@ public class PictureManagerActivity extends AppCompatActivity {
         return mFilePath;
     }
 
-    //为照片命名
+    //此为照片的名字
     private String getFileName(){
         Date date = new Date();
         SimpleDateFormat format = new SimpleDateFormat("'/IMG'_yyyyMMdd_HHmmss'.jpg'");//获取当前时间，进一步转化为字符串

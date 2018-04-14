@@ -1,53 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical" >
+    android:layout_height="match_parent">
+    <ImageView
+        android:id="@+id/iv_CameraImg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/bg_activity"
+        android:scaleType="centerCrop"/>
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:id="@+id/ll_top"
+        android:layout_alignParentTop="true"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/btn_PhotoDefault"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="18sp"
             android:text="默认相册" />
         <Button
             android:id="@+id/btn_PhotoExist"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textSize="18sp"
             android:layout_height="wrap_content"
             android:text="已有相册" />
 
         <Button
             android:id="@+id/btn_PhotoNewdir"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="18sp"
             android:text="新建相册" />
     </LinearLayout>
     <EditText
         android:id="@+id/et_fileName"
         android:visibility="gone"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColorHint="@color/colorAccent"
+        android:layout_below="@id/ll_top"
+        android:layout_marginRight="10dp"
+        android:textSize="18sp"
         android:hint="请在此输入要保存的文件夹路径"/>
     <Button
         android:id="@+id/btn_DriOK"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="10dp"
+        android:layout_below="@id/ll_top"
         android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="确定" />
 
-    <ImageView
-        android:id="@+id/iv_CameraImg"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+
     <Button
         android:id="@+id/btn_continue"
         android:visibility="gone"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
         android:text="继续拍照" />
-</LinearLayout>
+</RelativeLayout>

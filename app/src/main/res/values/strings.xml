@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">PicManager</string>
+    <string name="tv_main_top_tag" >有米</string >
+    <string name="tv_main_version_info" >AOS SDK V</string >
 </resources>
